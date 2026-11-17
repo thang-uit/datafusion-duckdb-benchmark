@@ -1,0 +1,15 @@
+# Python 3.11. Query-engine versions match the paper's Python experiment.
+datafusion==32.0.0
+duckdb==0.9.1
+# Arrow 14 and NumPy 1.x keep the older native Python bindings compatible.
+pyarrow==14.0.2
+numpy==1.26.4
+# Read benchmark CSV files and render comparison charts.
+pandas==3.0.6
+matplotlib==3.11.2
+seaborn==0.13.2
+prettytable==3.18.0
+# Run the notebook and display its annotated figures locally.
+ipykernel==7.4.0
+ipython==9.18.1
+Pillow==13.0.0

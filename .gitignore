@@ -1,13 +1,43 @@
-hits.parquet
-hits_multi
-datafusion-cli*
-venv
+# Python environments, compiled cache and notebook checkpoints.
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.pytest_cache/
+.ruff_cache/
+
+# macOS and local editor/automation state.
+.DS_Store
 *~
-my-db*
-.history
+.history/
+.playwright-cli/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+
+# Upstream checkouts stay separate from this benchmark's source.
 arrow-datafusion/
-arrow-datafusion-python
+arrow-datafusion-python/
 duckdb/
+source-inspection/
+.gitnexus/
+
+# Large datasets and local databases are regenerated locally.
+*.parquet
+*.tbl
+*.duckdb
+*.duckdb.wal
+my-db*
+hits_multi/
+datafusion-cli*
 h2o/*.csv
 tpch/*.csv
-results/latest
+
+# Keep the author's historical results already tracked in results/.
+# New benchmark runs and exploratory profiles remain local.
+results/latest/
+tpch/plan-evidence/
+
+# Cargo's lockfile is committed, compiled binaries are not.
+**/target/

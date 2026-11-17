@@ -1,0 +1,44 @@
+[
+  {
+    "image": "02-datafusion-chon-phia.png",
+    "title": "DataFusion 32: vì sao không tự đổi phía dựng?",
+    "snippets": [
+      {
+        "repository": "datafusion-32.0.0",
+        "commit": "eca48dae2447a67fcf30313c956e6c39cf739d48",
+        "file": "datafusion/common/src/config.rs",
+        "lines": [
+          211,
+          212
+        ],
+        "url": "https://github.com/apache/datafusion/blob/eca48dae2447a67fcf30313c956e6c39cf739d48/datafusion/common/src/config.rs#L211-L212",
+        "source": "        /// Should DataFusion collect statistics after listing files\n        pub collect_statistics: bool, default = false\n",
+        "sha256": "a9c6fb0d9d77cf6d2fa653389c82d413472306f0564c46a2846cbce0c7b81298"
+      },
+      {
+        "repository": "datafusion-32.0.0",
+        "commit": "eca48dae2447a67fcf30313c956e6c39cf739d48",
+        "file": "datafusion/core/src/datasource/listing_table_factory.rs",
+        "lines": [
+          215,
+          219
+        ],
+        "url": "https://github.com/apache/datafusion/blob/eca48dae2447a67fcf30313c956e6c39cf739d48/datafusion/core/src/datasource/listing_table_factory.rs#L215-L219",
+        "source": "        let options = ListingOptions::new(file_format)\n            .with_collect_stat(state.config().collect_statistics())\n            .with_file_extension(file_extension)\n            .with_target_partitions(state.config().target_partitions())\n            .with_table_partition_cols(table_partition_cols)\n",
+        "sha256": "895db0dda36cfff648ad3d2c0e320d7b020828c57b050e4121f9d48e46f2f2c3"
+      },
+      {
+        "repository": "datafusion-32.0.0",
+        "commit": "eca48dae2447a67fcf30313c956e6c39cf739d48",
+        "file": "datafusion/core/src/physical_optimizer/join_selection.rs",
+        "lines": [
+          63,
+          79
+        ],
+        "url": "https://github.com/apache/datafusion/blob/eca48dae2447a67fcf30313c956e6c39cf739d48/datafusion/core/src/physical_optimizer/join_selection.rs#L63-L79",
+        "source": "fn should_swap_join_order(left: &dyn ExecutionPlan, right: &dyn ExecutionPlan) -> bool {\n    // Get the left and right table's total bytes\n    // If both the left and right tables contain total_byte_size statistics,\n    // use `total_byte_size` to determine `should_swap_join_order`, else use `num_rows`\n    let (left_size, right_size) = match (\n        left.statistics().total_byte_size,\n        right.statistics().total_byte_size,\n    ) {\n        (Some(l), Some(r)) => (Some(l), Some(r)),\n        _ => (left.statistics().num_rows, right.statistics().num_rows),\n    };\n\n    match (left_size, right_size) {\n        (Some(l), Some(r)) => l > r,\n        _ => false,\n    }\n}\n",
+        "sha256": "149bb2a73d7ce530489ac782f817febcf143c44b3ef4f9ac9ee45b432a33747c"
+      }
+    ]
+  }
+]

@@ -1,0 +1,140 @@
+[
+  {
+    "image": "02-datafusion-cau-hinh.png",
+    "title": "DataFusion 32: lọc trong giải mã mặc định tắt",
+    "snippets": [
+      {
+        "repository": "datafusion-32.0.0",
+        "commit": "eca48dae2447a67fcf30313c956e6c39cf739d48",
+        "file": "datafusion/common/src/config.rs",
+        "lines": [
+          284,
+          286
+        ],
+        "url": "https://github.com/apache/datafusion/blob/eca48dae2447a67fcf30313c956e6c39cf739d48/datafusion/common/src/config.rs#L284-L286",
+        "source": "        /// If true, filter expressions are be applied during the parquet decoding operation to\n        /// reduce the number of rows decoded\n        pub pushdown_filters: bool, default = false\n",
+        "sha256": "52fd11195f8d5efd02c68fa24fc9c35c061c537c67e367a1002061a4502fd1d0"
+      },
+      {
+        "repository": "datafusion-32.0.0",
+        "commit": "eca48dae2447a67fcf30313c956e6c39cf739d48",
+        "file": "datafusion/core/src/datasource/physical_plan/parquet.rs",
+        "lines": [
+          211,
+          215
+        ],
+        "url": "https://github.com/apache/datafusion/blob/eca48dae2447a67fcf30313c956e6c39cf739d48/datafusion/core/src/datasource/physical_plan/parquet.rs#L211-L215",
+        "source": "    /// Return the value described in [`Self::with_pushdown_filters`]\n    fn pushdown_filters(&self, config_options: &ConfigOptions) -> bool {\n        self.pushdown_filters\n            .unwrap_or(config_options.execution.parquet.pushdown_filters)\n    }\n",
+        "sha256": "284db7b86903b85c5291d423539f7dbbec8d5df0c400bf4a5d31b94da40b5d49"
+      },
+      {
+        "repository": "datafusion-32.0.0",
+        "commit": "eca48dae2447a67fcf30313c956e6c39cf739d48",
+        "file": "datafusion/core/src/datasource/physical_plan/parquet.rs",
+        "lines": [
+          462,
+          475
+        ],
+        "url": "https://github.com/apache/datafusion/blob/eca48dae2447a67fcf30313c956e6c39cf739d48/datafusion/core/src/datasource/physical_plan/parquet.rs#L462-L475",
+        "source": "            // Filter pushdown: evaluate predicates during scan\n            if let Some(predicate) = pushdown_filters.then_some(predicate).flatten() {\n                let row_filter = row_filter::build_row_filter(\n                    &predicate,\n                    builder.schema().as_ref(),\n                    table_schema.as_ref(),\n                    builder.metadata(),\n                    reorder_predicates,\n                    &file_metrics,\n                );\n\n                match row_filter {\n                    Ok(Some(filter)) => {\n                        builder = builder.with_row_filter(filter);\n",
+        "sha256": "dbb1578525f022ae76de9225c6cdce4641d1cd044ae11f1979c89569fc33f13c"
+      }
+    ]
+  },
+  {
+    "image": "03-datafusion-filterexec.png",
+    "title": "DataFusion 32: FilterExec xử lý lô Arrow",
+    "snippets": [
+      {
+        "repository": "datafusion-32.0.0",
+        "commit": "eca48dae2447a67fcf30313c956e6c39cf739d48",
+        "file": "datafusion/physical-plan/src/filter.rs",
+        "lines": [
+          303,
+          315
+        ],
+        "url": "https://github.com/apache/datafusion/blob/eca48dae2447a67fcf30313c956e6c39cf739d48/datafusion/physical-plan/src/filter.rs#L303-L315",
+        "source": "pub(crate) fn batch_filter(\n    batch: &RecordBatch,\n    predicate: &Arc<dyn PhysicalExpr>,\n) -> Result<RecordBatch> {\n    predicate\n        .evaluate(batch)\n        .map(|v| v.into_array(batch.num_rows()))\n        .and_then(|array| {\n            Ok(as_boolean_array(&array)?)\n                // apply filter array to record batch\n                .and_then(|filter_array| Ok(filter_record_batch(batch, filter_array)?))\n        })\n}\n",
+        "sha256": "c090b1212822021bf676241a78ec093a47d6ba3a6e7aaeb40d3f7b8002540c12"
+      }
+    ]
+  },
+  {
+    "image": "04-duckdb-cau-hinh.png",
+    "title": "DuckDB 0.9.1: cho phép đưa điều kiện vào bộ đọc",
+    "snippets": [
+      {
+        "repository": "duckdb-0.9.1",
+        "commit": "401c8061c6ece35949cac58c7770cc755710ca86",
+        "file": "extension/parquet/parquet_extension.cpp",
+        "lines": [
+          175,
+          180
+        ],
+        "url": "https://github.com/duckdb/duckdb/blob/401c8061c6ece35949cac58c7770cc755710ca86/extension/parquet/parquet_extension.cpp#L175-L180",
+        "source": "\t\ttable_function.get_batch_info = ParquetGetBatchInfo;\n\t\ttable_function.projection_pushdown = true;\n\t\ttable_function.filter_pushdown = true;\n\t\ttable_function.filter_prune = true;\n\t\ttable_function.pushdown_complex_filter = ParquetComplexFilterPushdown;\n\t\treturn MultiFileReader::CreateFunctionSet(table_function);\n",
+        "sha256": "555e8646a68fac7efc31c8cd8a2fd5331aa9330f9d484c446e7c6a4d986138be"
+      },
+      {
+        "repository": "duckdb-0.9.1",
+        "commit": "401c8061c6ece35949cac58c7770cc755710ca86",
+        "file": "src/optimizer/pushdown/pushdown_get.cpp",
+        "lines": [
+          52,
+          56
+        ],
+        "url": "https://github.com/duckdb/duckdb/blob/401c8061c6ece35949cac58c7770cc755710ca86/src/optimizer/pushdown/pushdown_get.cpp#L52-L56",
+        "source": "\tPushFilters();\n\n\t//! We generate the table filters that will be executed during the table scan\n\t//! Right now this only executes simple AND filters\n\tget.table_filters = combiner.GenerateTableScanFilters(get.column_ids);\n",
+        "sha256": "2bfb4cd9277138225e54626349fc7f36d244aa5a74d5ed5e22a8076ec1cfb0d0"
+      }
+    ]
+  },
+  {
+    "image": "05-duckdb-doc-va-loc.png",
+    "title": "DuckDB 0.9.1: đọc cột điều kiện rồi ApplyFilter",
+    "snippets": [
+      {
+        "repository": "duckdb-0.9.1",
+        "commit": "401c8061c6ece35949cac58c7770cc755710ca86",
+        "file": "extension/parquet/parquet_reader.cpp",
+        "lines": [
+          945,
+          955
+        ],
+        "url": "https://github.com/duckdb/duckdb/blob/401c8061c6ece35949cac58c7770cc755710ca86/extension/parquet/parquet_reader.cpp#L945-L955",
+        "source": "\t\t\t\tauto id = filter_entry.index;\n\t\t\t\tauto file_col_idx = reader_data.column_ids[id];\n\t\t\t\tauto result_idx = reader_data.column_mapping[id];\n\n\t\t\t\tauto &result_vector = result.data[result_idx];\n\t\t\t\tauto child_reader = root_reader.GetChildReader(file_col_idx);\n\t\t\t\tchild_reader->Read(result.size(), filter_mask, define_ptr, repeat_ptr, result_vector);\n\t\t\t\tneed_to_read[id] = false;\n\n\t\t\t\tApplyFilter(result_vector, *filter_col.second, filter_mask, this_output_chunk_rows);\n\t\t\t}\n",
+        "sha256": "2890e6dc658fb500034cabc7ea937583eaf8093f6046bd3ff8a44b6021813d2e"
+      },
+      {
+        "repository": "duckdb-0.9.1",
+        "commit": "401c8061c6ece35949cac58c7770cc755710ca86",
+        "file": "extension/parquet/parquet_reader.cpp",
+        "lines": [
+          688,
+          703
+        ],
+        "url": "https://github.com/duckdb/duckdb/blob/401c8061c6ece35949cac58c7770cc755710ca86/extension/parquet/parquet_reader.cpp#L688-L703",
+        "source": "\tD_ASSERT(v.GetVectorType() == VectorType::FLAT_VECTOR);\n\tauto v_ptr = FlatVector::GetData<T>(v);\n\tauto &mask = FlatVector::Validity(v);\n\n\tif (!mask.AllValid()) {\n\t\tfor (idx_t i = 0; i < count; i++) {\n\t\t\tif (mask.RowIsValid(i)) {\n\t\t\t\tfilter_mask[i] = filter_mask[i] && OP::Operation(v_ptr[i], constant);\n\t\t\t}\n\t\t}\n\t} else {\n\t\tfor (idx_t i = 0; i < count; i++) {\n\t\t\tfilter_mask[i] = filter_mask[i] && OP::Operation(v_ptr[i], constant);\n\t\t}\n\t}\n}\n",
+        "sha256": "140b8fc1a746785dd39508bbc3a40718fe81918e37189d46c7a671cecccfc46b"
+      }
+    ]
+  },
+  {
+    "image": "06-duckdb-filter-rieng.png",
+    "title": "DuckDB 0.9.1: FILTER riêng sau khi tắt quy tắc",
+    "snippets": [
+      {
+        "repository": "duckdb-0.9.1",
+        "commit": "401c8061c6ece35949cac58c7770cc755710ca86",
+        "file": "src/execution/operator/filter/physical_filter.cpp",
+        "lines": [
+          42,
+          53
+        ],
+        "url": "https://github.com/duckdb/duckdb/blob/401c8061c6ece35949cac58c7770cc755710ca86/src/execution/operator/filter/physical_filter.cpp#L42-L53",
+        "source": "OperatorResultType PhysicalFilter::ExecuteInternal(ExecutionContext &context, DataChunk &input, DataChunk &chunk,\n                                                   GlobalOperatorState &gstate, OperatorState &state_p) const {\n\tauto &state = state_p.Cast<FilterState>();\n\tidx_t result_count = state.executor.SelectExpression(input, state.sel);\n\tif (result_count == input.size()) {\n\t\t// nothing was filtered: skip adding any selection vectors\n\t\tchunk.Reference(input);\n\t} else {\n\t\tchunk.Slice(input, state.sel, result_count);\n\t}\n\treturn OperatorResultType::NEED_MORE_INPUT;\n}\n",
+        "sha256": "27d8668358abfd07c8eb59c526afe25fcaf0c135ec96c754f9e1bdcd302fe34b"
+      }
+    ]
+  }
+]
